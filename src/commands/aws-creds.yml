@@ -29,9 +29,10 @@ steps:
         echo "Vault authenticate successfully"
 
         echo "Retrieving AWS credentials"
-        AWS_ACCESS_KEY_ID=$(vault read aws/creds/my-role | grep 'access_key' | awk '{print $2}')
+        CREDS=$(vault read aws/creds/my-role)
+        AWS_ACCESS_KEY_ID=$(echo $CREDS | grep -o 'access_key [^ ]*' | awk '{print $2}')
         echo $AWS_ACCESS_KEY_ID > /tmp/aws_access_key_id
-        AWS_SECRET_ACCESS_KEY=$(vault read aws/creds/my-role | grep 'secret_key' | awk '{print $2}')
+        AWS_SECRET_ACCESS_KEY=$(echo $CREDS | grep -o 'secret_key [^ ]*' | awk '{print $2}')
         echo $AWS_SECRET_ACCESS_KEY > /tmp/aws_secret_access_key
         echo "AWS credentials retrieved successfully"
 
