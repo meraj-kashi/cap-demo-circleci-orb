@@ -1,0 +1,41 @@
+description: >
+  This command retrieves AWS credentials
+
+# Pipeline parameters
+parameters:
+  vault_root_token:
+    type: string
+    default: ""
+  vault_url:
+    type: string
+    default: ""
+  environment:
+    type: string
+    default: "$CIRCLE_BRANCH"
+
+steps:
+  - run:
+      name: Get aws credentials from vault
+      command: |
+        # Setup variables
+        # Force to use cgo resolver
+        export VAULT_ADDR="<< parameters.vault_url >>"
+
+        # Get vault credentials by using vault approle
+        VAULT_TOKEN="<< parameters.vault_root_token >>"
+
+        # Login to vault using token to create aws credentials
+        vault login -method=token token=$VAULT_TOKEN
+        echo "Vault authenticate successfully"
+
+        echo "Retrieving AWS credentials"
+        AWS_ACCESS_KEY_ID=$(vault read aws/creds/my-role | grep 'access_key' | awk '{print $2}')
+        echo $AWS_ACCESS_KEY_ID > /tmp/aws_access_key_id
+        AWS_SECRET_ACCESS_KEY=$(vault read aws/creds/my-role | grep 'secret_key' | awk '{print $2}')
+        echo $AWS_SECRET_ACCESS_KEY > /tmp/aws_secret_access_key
+        echo "AWS credentials retrieved successfully"
+
+  - persist_to_workspace:
+      root: /tmp
+      paths:
+        - "*"
